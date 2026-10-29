@@ -2,6 +2,15 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true
+    "playwright@claude-plugins-official": true,
+    "independent-reviewer@max-tools": true
+  },
+  "extraKnownMarketplaces": {
+    "max-tools": {
+      "source": {
+        "source": "directory",
+        "path": "."
+      }
+    }
   }
 }

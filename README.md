@@ -1,62 +1,52 @@
-# FinAlly — AI Trading Workstation
+# FinAlly
 
-A visually stunning AI-powered trading workstation that streams live market data, simulates portfolio trading, and integrates an LLM chat assistant that can analyze positions and execute trades via natural language.
+FinAlly is a simulated trading workstation with live prices and an AI chat assistant that can place market orders. It is the capstone project for an agentic coding course. The product spec is [`planning/PLAN.md`](planning/PLAN.md).
 
-Built entirely by coding agents as a capstone project for an agentic AI coding course.
+## Status
 
-## Features
+The market data library in `backend/` is built and tested. The frontend, portfolio, chat API, SQLite database, and Docker image are specified in the plan and are still to be built.
 
-- **Live price streaming** via SSE with green/red flash animations
-- **Simulated portfolio** — $10k virtual cash, market orders, instant fills
-- **Portfolio visualizations** — heatmap (treemap), P&L chart, positions table
-- **AI chat assistant** — analyzes holdings, suggests and auto-executes trades
-- **Watchlist management** — track tickers manually or via AI
-- **Dark terminal aesthetic** — Bloomberg-inspired, data-dense layout
+## Requirements
 
-## Architecture
+- Python 3.12 or newer
+- [uv](https://docs.astral.sh/uv/)
 
-Single Docker container serving everything on port 8000:
+## Market data
 
-- **Frontend**: Next.js (static export) with TypeScript and Tailwind CSS
-- **Backend**: FastAPI (Python/uv) with SSE streaming
-- **Database**: SQLite with lazy initialization
-- **AI**: LiteLLM → OpenRouter (Cerebras inference) with structured outputs
-- **Market data**: Built-in GBM simulator (default) or Massive API (optional)
+The library in `backend/app/market/` writes prices into a shared in-memory cache.
 
-## Quick Start
+- With no API key, a geometric Brownian motion simulator generates prices. The default watchlist is AAPL, GOOGL, MSFT, AMZN, TSLA, NVDA, META, JPM, V, and NFLX.
+- With `MASSIVE_API_KEY` set to a non-empty value, `create_market_data_source()` polls Massive (Polygon.io) into the same cache.
+
+`create_stream_router(cache)` returns a FastAPI router for `GET /api/stream/prices` (server-sent events, about every 500 ms). That router is a library function. An application that mounts it is still to be built, so nothing serves the endpoint yet.
+
+From `backend/`:
 
 ```bash
-# Clone and configure
-cp .env.example .env
-# Add your OPENROUTER_API_KEY to .env
-
-# Run with Docker
-docker build -t finally .
-docker run -v finally-data:/app/db -p 8000:8000 --env-file .env finally
-
-# Open http://localhost:8000
+uv sync --extra dev
+uv run market_data_demo.py   # 60-second terminal dashboard of simulated prices
+uv run pytest                # market data tests
+uv run ruff check .          # lint
 ```
 
-## Environment Variables
+The demo always uses the simulator. It does not read `MASSIVE_API_KEY`. Stop it with Ctrl+C.
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Yes | OpenRouter API key for AI chat |
-| `MASSIVE_API_KEY` | No | Massive (Polygon.io) key for real market data; omit to use simulator |
-| `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
+Set `MASSIVE_API_KEY` in the environment before code that calls `create_market_data_source()`. Do not commit the key. `.env` is gitignored.
 
-## Project Structure
+## Layout
 
 ```
-finally/
-├── frontend/    # Next.js static export
-├── backend/     # FastAPI uv project
-├── planning/    # Project documentation and agent contracts
-├── test/        # Playwright E2E tests
-├── db/          # SQLite volume mount (runtime)
-└── scripts/     # Start/stop helpers
+backend/     Market data library, tests, and the terminal demo
+planning/    Product spec (PLAN.md), market data summary, and design archive
+LICENSE      MIT
 ```
+
+Further notes:
+
+- [`planning/MARKET_DATA_SUMMARY.md`](planning/MARKET_DATA_SUMMARY.md) — what the market data library does
+- [`backend/README.md`](backend/README.md) — module list, tests, and lint
+- [`backend/CLAUDE.md`](backend/CLAUDE.md) — public API for downstream code
 
 ## License
 
-See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
