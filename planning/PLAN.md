@@ -106,6 +106,20 @@ finally/
 └── .gitignore
 ```
 
+### Design Principles (SOLID)
+
+All backend and frontend code should follow SOLID. Concretely for this project:
+
+| Principle | Application in FinAlly |
+|---|---|
+| **S**ingle Responsibility | One reason to change per module: route handlers only translate HTTP ↔ service calls; a `portfolio` service owns trade/P&L logic; a `chat` service owns prompt building, LLM call and parsing; `db/` owns persistence; market sources only produce prices; `PriceCache` only stores them. Frontend: components render, hooks/stores fetch and hold state. |
+| **O**pen/Closed | Extend by adding implementations, not editing consumers. A new price provider is a new `MarketDataSource` class plus one factory branch; a new LLM action type is a new handler registered in the chat action dispatcher, not an `if` chain edit. |
+| **L**iskov Substitution | Every `MarketDataSource` / `EodDataSource` implementation honors the same contract (cache seeded after `start()`, idempotent `stop()`, upper-cased tickers, no exceptions escaping background tasks), enforced by one shared parametrized contract test suite run against each implementation. |
+| **I**nterface Segregation | Small, role-specific interfaces: live streaming (`MarketDataSource`), end-of-day history (`EodDataSource`), and read-only price lookup (`PriceCache` reads) are separate. Consumers depend only on what they use — e.g. trade execution needs a `get_price(ticker)` callable, not the whole data source. |
+| **D**ependency Inversion | High-level services (portfolio, chat, SSE) depend on abstractions and receive them via constructor/FastAPI dependency injection: `PriceCache`, the market source, a repository/DB connection, and an `LLMClient` protocol (real LiteLLM client vs. mock for `LLM_MOCK=true`). No module-level globals or `os.environ` reads outside composition root (`main.py` / factories). |
+
+Practical rules: composition happens in one place (app startup); business logic is testable without FastAPI, network, or a real DB; no service imports a concrete provider class; prefer small protocols/ABCs over inheritance hierarchies; don't add abstraction without a second implementation or a test seam that needs it.
+
 ### Key Boundaries
 
 - **`frontend/`** is a self-contained Next.js project. It knows nothing about Python. It talks to the backend via `/api/*` endpoints and `/api/stream/*` SSE endpoints. Internal structure is up to the Frontend Engineer agent.
