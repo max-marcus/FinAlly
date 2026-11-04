@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from threading import Lock
 
-from .models import PriceUpdate
+from .models import PriceUpdate, normalize_ticker
 
 
 class PriceCache:
@@ -26,8 +26,9 @@ class PriceCache:
         Automatically computes direction and change from the previous price.
         If this is the first update for the ticker, previous_price == price (direction='flat').
         """
+        ticker = normalize_ticker(ticker)
         with self._lock:
-            ts = timestamp or time.time()
+            ts = timestamp if timestamp is not None else time.time()
             prev = self._prices.get(ticker)
             previous_price = prev.price if prev else price
 
@@ -44,7 +45,7 @@ class PriceCache:
     def get(self, ticker: str) -> PriceUpdate | None:
         """Get the latest price for a single ticker, or None if unknown."""
         with self._lock:
-            return self._prices.get(ticker)
+            return self._prices.get(normalize_ticker(ticker))
 
     def get_all(self) -> dict[str, PriceUpdate]:
         """Snapshot of all current prices. Returns a shallow copy."""
@@ -59,7 +60,7 @@ class PriceCache:
     def remove(self, ticker: str) -> None:
         """Remove a ticker from the cache (e.g., when removed from watchlist)."""
         with self._lock:
-            self._prices.pop(ticker, None)
+            self._prices.pop(normalize_ticker(ticker), None)
 
     @property
     def version(self) -> int:
@@ -72,4 +73,4 @@ class PriceCache:
 
     def __contains__(self, ticker: str) -> bool:
         with self._lock:
-            return ticker in self._prices
+            return normalize_ticker(ticker) in self._prices

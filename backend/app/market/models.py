@@ -6,6 +6,11 @@ import time
 from dataclasses import dataclass, field
 
 
+def normalize_ticker(ticker: str) -> str:
+    """Canonical ticker form used by every market data component (upper-case, trimmed)."""
+    return ticker.strip().upper()
+
+
 @dataclass(frozen=True, slots=True)
 class PriceUpdate:
     """Immutable snapshot of a single ticker's price at a point in time."""
