@@ -1,0 +1,24 @@
+# Run from repo root: docker compose -f test/docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from playwright
+services:
+  app:
+    build:
+      context: ..
+    environment:
+      LLM_MOCK: "true"
+      MASSIVE_API_KEY: ""
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.49.1-jammy
+    working_dir: /work
+    volumes:
+      - ./:/work
+    environment:
+      BASE_URL: http://app:8000
+    depends_on:
+      app:
+        condition: service_healthy
+    command: ["sh", "-c", "npm ci || npm install && npx playwright test"]

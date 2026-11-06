@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; background: #0d1117; color: #d7dee8; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #252f3d; }
+:focus-visible { outline: 1px solid #209dd7; outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0s !important; animation: none !important; } }
