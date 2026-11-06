@@ -212,3 +212,6 @@ db/*.db-*
 node_modules/
 .next/
 out/
+
+# Un-ignore frontend source (the Python lib/ pattern above would otherwise exclude it)
+!frontend/src/lib/
